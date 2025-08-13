@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 from typing import Dict, List, Any, Union, Optional
+from difflib import get_close_matches
 from io import BytesIO
 from app.core.config import settings
 import numpy as np
@@ -9,6 +10,34 @@ import numpy as np
 # Key: filename, Value: pd.DataFrame or Dict[str, pd.DataFrame] for Excel
 # This should ideally be more robust (e.g., Redis, or manage lifetimes)
 STRUCTURED_DATA_CACHE: Dict[str, Any] = {}
+
+def find_best_matching_column(df: pd.DataFrame, requested_column: str) -> Optional[str]:
+    """
+    Try to find the best matching column name in the dataframe for a user-provided column label.
+    Matching strategy:
+    - Case-insensitive exact match
+    - Substring containment (either direction)
+    - Fuzzy close match using difflib
+    Returns the actual column name from df if found; otherwise None.
+    """
+    if not isinstance(requested_column, str):
+        requested_column = str(requested_column)
+    requested_norm = requested_column.strip().lower()
+    columns = list(df.columns)
+    norm_map = {str(c).strip().lower(): c for c in columns}
+    if requested_norm in norm_map:
+        return norm_map[requested_norm]
+    # Substring containment
+    for col in columns:
+        col_norm = str(col).strip().lower()
+        if requested_norm in col_norm or col_norm in requested_norm:
+            return col
+    # Fuzzy match
+    candidates = list(norm_map.keys())
+    match = get_close_matches(requested_norm, candidates, n=1, cutoff=0.8)
+    if match:
+        return norm_map[match[0]]
+    return None
 
 def load_structured_file(file_path: str, filename: str = None) -> Union[pd.DataFrame, Dict[str, pd.DataFrame], None]:
     """
@@ -78,10 +107,15 @@ def get_interactive_list(filename: str, column_name: str, sheet_name: str = None
     if df_to_query is None:
         return [f"Error: Sheet '{sheet_name}' not found in '{filename}' or data not loaded."]
     
-    if column_name not in df_to_query.columns:
-        return [f"Error: Column '{column_name}' not found. Available columns: {df_to_query.columns.tolist()}"]
+    # Resolve column name robustly
+    target_column = column_name
+    if target_column not in df_to_query.columns:
+        mapped = find_best_matching_column(df_to_query, target_column)
+        if mapped is None:
+            return [f"Error: Column '{column_name}' not found. Available columns: {df_to_query.columns.tolist()}"]
+        target_column = mapped
     
-    return df_to_query[column_name].unique().tolist()
+    return df_to_query[target_column].unique().tolist()
 
 
 def count_matching_rows(filename: str, column: str, value: Any, sheet_name: str = None) -> int:
@@ -119,7 +153,10 @@ def count_matching_rows(filename: str, column: str, value: Any, sheet_name: str 
         raise ValueError(f"Sheet '{sheet_name}' not found in '{filename}'")
     
     if column not in df.columns:
-        raise ValueError(f"Column '{column}' not found in the data")
+        mapped = find_best_matching_column(df, column)
+        if mapped is None:
+            raise ValueError(f"Column '{column}' not found in the data")
+        column = mapped
     
     # For string comparisons, normalize and use case-insensitive comparison
     if pd.api.types.is_string_dtype(df[column]) or is_csv:
@@ -240,7 +277,10 @@ def execute_filtered_query(filename: str, query_params: Dict, sheet_name: str = 
                 if not all([col, op, val is not None]):  # Changed to handle val=0 or val=False
                     raise ValueError("Invalid query parameters. Need column, operator, and value.")
                 if col not in df_to_query.columns:
-                    raise ValueError(f"Column '{col}' not found in data.")
+                    mapped = find_best_matching_column(df_to_query, col)
+                    if mapped is None:
+                        raise ValueError(f"Column '{col}' not found in data.")
+                    col = mapped
                 
                 # Special handling for gender column in CSV files to prevent ambiguity
                 if is_csv and col.lower() == 'gender' and op == "==":
@@ -264,7 +304,10 @@ def execute_filtered_query(filename: str, query_params: Dict, sheet_name: str = 
             if not all([col, op, val is not None]):  # Changed to handle val=0 or val=False
                 raise ValueError("Invalid query parameters. Need column, operator, and value.")
             if col not in df_to_query.columns:
-                raise ValueError(f"Column '{col}' not found in data.")
+                mapped = find_best_matching_column(df_to_query, col)
+                if mapped is None:
+                    raise ValueError(f"Column '{col}' not found in data.")
+                col = mapped
             
             # Special handling for gender column in CSV files to prevent ambiguity
             if is_csv and col.lower() == 'gender' and op == "==":

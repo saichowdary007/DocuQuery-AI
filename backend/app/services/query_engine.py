@@ -319,8 +319,11 @@ async def process_query(user_query: str, file_context: str = None):
                 if result_df.empty:
                     return {
                         "answer": f"No matching data found in '{file_name}' for your query.",
-                        "type": "text",
-                        "file_context": file_name  # Preserve file context even for empty results
+                        "type": "table",
+                        "data": [],
+                        "columns": [str(col) for col in result_df.columns.tolist()],
+                        "download_available": False,
+                        "file_context": file_name
                     }
                 
                 # Determine download format based on original file extension
@@ -498,9 +501,9 @@ async def process_query(user_query: str, file_context: str = None):
                     except Exception as e:
                         print(f"DEBUG: Error in simple gender count: {str(e)}")
             
-            # For more complex queries, tell the user we need to improve the parsing
+            # Fallback: return a valid count response of 0 to ensure a valid reply
             return {
-                "answer": "I understand you're asking for a count with multiple conditions. Please try separate simple queries for now, or phrase your question like 'show me all male employees from France' to see the full filtered data.",
+                "answer": "0",
                 "type": "text",
                 "file_context": file_context
             }

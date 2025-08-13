@@ -117,7 +117,13 @@ def get_retriever(k_results=5):
         else:
             print("Vector store not initialized and no index found. Upload files first.")
             return None # Or raise an error
-    return vector_store.as_retriever(search_kwargs={"k": k_results})
+    # Use MMR retriever to diversify results and improve recall when context is weak
+    # Increase fetch_k to retrieve more candidates before MMR selection
+    fetch_k = max(20, k_results * 5)
+    return vector_store.as_retriever(
+        search_type="mmr",
+        search_kwargs={"k": k_results, "fetch_k": fetch_k, "lambda_mult": 0.5}
+    )
 
 # Call initialize_vector_store() on app startup if index exists
 # This can be done in main.py: app.on_event("startup")

@@ -89,8 +89,10 @@ def parse_excel(file_path: str) -> Dict[str, pd.DataFrame]:
     return pd.read_excel(file_path, sheet_name=None)
 
 def parse_md(file_path: str) -> str:
+    # Convert markdown to plain text by stripping HTML tags produced by markdown renderer
+    # Using markdown to HTML then removing tags can be lossy; prefer raw text for retrieval
     with open(file_path, 'r', encoding='utf-8') as f:
-        return markdown.markdown(f.read())
+        return f.read()
 
 def get_documents_from_file(file_path: str, filename: str) -> List[Document]:
     _, ext = os.path.splitext(filename.lower())

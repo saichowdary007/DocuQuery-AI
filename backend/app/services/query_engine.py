@@ -152,6 +152,20 @@ async def process_query(user_query: str, file_context: str = None):
     else:
         file_is_structured = False
 
+    # Optional: rewrite user query to improve retrieval when context is weak
+    try:
+        rewrite_prompt = (
+            "Rewrite the user's question for best retrieval over document chunks. "
+            "Preserve intent and add likely synonyms and key terms.\n\n"
+            f"User question: {user_query}\n\nRewritten retrieval query:"
+        )
+        rewritten = await llm.ainvoke(rewrite_prompt)
+        if hasattr(rewritten, 'content'):
+            rewritten = rewritten.content
+        rewritten_query = rewritten.strip() if isinstance(rewritten, str) and rewritten.strip() else user_query
+    except Exception:
+        rewritten_query = user_query
+
     # 2. Intent Recognition and Parameter Extraction using LLM
     #    (Simplified version; true function calling with Gemini would be more robust)
     intent_prompt = PromptTemplate(
@@ -360,8 +374,8 @@ async def process_query(user_query: str, file_context: str = None):
     if not qa_chain:
         return {"answer": "QA system not ready. Please try again after uploading files.", "type": "text"}
     
-    # If parameters contain a specific query from intent detection, use it. Otherwise, use original.
-    final_query = parameters.get("query", user_query)
+    # If parameters contain a specific query from intent detection, use it. Otherwise, use rewritten.
+    final_query = parameters.get("query", rewritten_query)
     
     # Check for "number of X" or "count of X" type queries
     lower_query = user_query.lower()

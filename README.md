@@ -1,4 +1,4 @@
-
+# DocuQuery AI
 
 A powerful document query system that combines RAG (Retrieval-Augmented Generation) with structured data handling capabilities. Upload documents and interact with them through natural language queries.
 

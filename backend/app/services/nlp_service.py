@@ -74,7 +74,7 @@ class SimpleEmbeddingsModel(Embeddings):
 
 class GeminiChatModel(BaseChatModel):
     api_key: str = Field(...)
-    model_name: str = Field(default="gemini-2.0-flash")
+    model_name: str = Field(default="gemini-2.5-flash")
     temperature: float = Field(default=0.1)
     max_tokens: int = Field(default=1024)
     base_url: str = Field(default="https://generativelanguage.googleapis.com/v1beta")

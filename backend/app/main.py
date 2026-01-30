@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.core.database import init_db
 from app.core.database_migration import run_migrations
 from app.core.database_seed import seed_admin_user
-from app.routers import auth, files, queries, users
+from app.routers import auth, files, queries, users, health
 
 app = FastAPI(
     title="DocuQuery AI",
@@ -48,6 +48,7 @@ app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["aut
 app.include_router(files.router, prefix=f"{settings.API_V1_STR}/files", tags=["files"])
 app.include_router(queries.router, prefix=f"{settings.API_V1_STR}/queries", tags=["queries"])
 app.include_router(users.router, prefix=f"{settings.API_V1_STR}/users", tags=["users"])
+app.include_router(health.router, prefix=f"{settings.API_V1_STR}", tags=["health"])
 
 @app.on_event("startup")
 async def startup_event():

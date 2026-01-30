@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from ..core.security import api_key_auth
+from ..core.security import get_api_key
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -11,7 +11,7 @@ async def health_check():
     """
     return {"status": "healthy", "message": "Service is running normally"}
 
-@router.get("/health/protected", tags=["health"], dependencies=[Depends(api_key_auth)])
+@router.get("/health/protected", tags=["health"], dependencies=[Depends(get_api_key)])
 async def protected_health_check():
     """
     Protected health check endpoint that requires API key authentication.

@@ -24,7 +24,7 @@ numpy
 # Authentication dependencies
 python-jose[cryptography]
 passlib[bcrypt]
-bcrypt
+bcrypt<4.0.0
 email-validator
 # For Tika (optional, more complex setup)
 # tika

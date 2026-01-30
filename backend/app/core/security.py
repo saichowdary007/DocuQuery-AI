@@ -2,6 +2,7 @@ from fastapi import Security, HTTPException, status, Depends
 from fastapi.security import APIKeyHeader, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from passlib.context import CryptContext
+import hashlib
 from datetime import datetime, timedelta
 from typing import Optional, Union, Any
 import os
@@ -25,14 +26,29 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
+def _normalize_password(password: str) -> str:
+    """
+    Normalize passwords for bcrypt.
+    Bcrypt only supports up to 72 bytes, so pre-hash longer inputs.
+    """
+    if password is None:
+        return ""
+    password_bytes = password.encode("utf-8")
+    if len(password_bytes) <= 72:
+        return password
+    return hashlib.sha256(password_bytes).hexdigest()
+
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    normalized = _normalize_password(plain_password)
+    return pwd_context.verify(normalized, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password for storing."""
-    return pwd_context.hash(password)
+    normalized = _normalize_password(password)
+    return pwd_context.hash(normalized)
 
 
 def create_access_token(subject: Union[str, Any], role: str = "user", expires_delta: Optional[timedelta] = None) -> str:

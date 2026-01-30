@@ -1,6 +1,7 @@
 import requests
 import time
 import json
+import os
 import numpy as np
 from typing import Dict, Any, List, Optional, Sequence
 from langchain_google_vertexai import VertexAIEmbeddings

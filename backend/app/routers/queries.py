@@ -24,5 +24,7 @@ async def handle_query(request: QueryRequest):
         return QueryResponse(**result)
     except Exception as e:
         # Log the full error for debugging
-        print(f"Error in handle_query: {e}") # Use proper logging
+        import traceback
+        print(f"Error in handle_query: {e}")
+        print(f"Traceback: {traceback.format_exc()}") # Use proper logging
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}") 

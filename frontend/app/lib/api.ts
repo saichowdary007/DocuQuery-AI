@@ -26,7 +26,7 @@ export const apiUrls = {
 
 // Get API key from environment variables
 export const getApiKey = () => {
-  return process.env.NEXT_PUBLIC_BACKEND_API_KEY || 'secret_api_key_123';
+  return process.env.NEXT_PUBLIC_BACKEND_API_KEY || 'dev-api-key';
 };
 
 // Google OAuth client ID

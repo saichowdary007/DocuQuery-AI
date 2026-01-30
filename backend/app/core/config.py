@@ -3,7 +3,9 @@ import os
 from typing import Optional, Union
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env file from the backend directory
+backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv(os.path.join(backend_dir, '.env'))
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "RAG Chatbot"

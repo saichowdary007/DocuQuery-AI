@@ -1,4 +1,8 @@
-from langchain_core.chains import RetrievalQA
+try:
+    from langchain_classic.chains import RetrievalQA
+except ModuleNotFoundError:
+    # Fallback for environments where langchain_classic isn't installed separately.
+    from langchain.chains import RetrievalQA
 from langchain_core.prompts import PromptTemplate
 from app.services.nlp_service import get_llm
 from app.services.vector_store import get_retriever

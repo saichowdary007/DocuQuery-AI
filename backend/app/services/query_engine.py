@@ -1,4 +1,4 @@
-from langchain.chains import RetrievalQA
+from langchain_core.chains import RetrievalQA
 from langchain_core.prompts import PromptTemplate
 from app.services.nlp_service import get_llm
 from app.services.vector_store import get_retriever
@@ -70,7 +70,7 @@ For complex queries with multiple conditions (e.g., "show males with age over 30
 
 Output your decision as a JSON object with "intent" and "parameters" keys.
 For example:
-{{"intent": "filter_structured_data", "parameters": {{"file_name": "employees.xlsx", "sheet_name": "Q1_Data", "query_params": {{"column": "Salary", "operator": ">", "value": "50000"}}, "drop_duplicates": false}}}}
+{{"intent": "filter_structured_data", "parameters": {{"file_name": "employees.xlsx", "sheet_name": "Q1_Data", "query_params": {{"column": "Salary", "operator": ">", "value": "50000"}}, "drop_duplicate[...]
 OR
 {{"intent": "filter_structured_data", "parameters": {{"file_name": "employees.xlsx", "sheet_name": "Q1_Data", "query_params": [
   {{"column": "Department", "operator": "==", "value": "Sales"}},
@@ -298,7 +298,7 @@ async def process_query(user_query: str, file_context: str = None):
                 
                 print(f"DEBUG: Query successful, got DataFrame with {len(result_df)} rows")
                 
-                # ─── OPTIONAL: limit to specific columns ─────────────────
+                # ���── OPTIONAL: limit to specific columns ─────────────────
                 if return_columns:
                     if isinstance(return_columns, str):
                         return_columns = [return_columns]

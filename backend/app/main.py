@@ -63,9 +63,13 @@ async def startup_event():
     # Run data migrations
     run_migrations()
     
-    # Initialize vector store
-    from app.services.vector_store import initialize_vector_store
-    initialize_vector_store()
+    # Initialize vector store only if explicitly requested to reduce memory at boot
+    preload_vector_store = os.getenv("PRELOAD_VECTOR_STORE", "0").lower() in ("1", "true", "yes")
+    if preload_vector_store:
+        from app.services.vector_store import initialize_vector_store
+        initialize_vector_store()
+    else:
+        print("Skipping vector store preload; it will initialize on first use.")
     
     # Ensure temp upload folder exists
     os.makedirs(settings.TEMP_UPLOAD_FOLDER, exist_ok=True)

@@ -31,6 +31,10 @@ services:
         generateValue: true # Auto-generate a secure admin password
       - key: SEED_ADMIN_NAME
         value: Admin User
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: PRELOAD_VECTOR_STORE
+        value: "0"
     disk:
       name: data
       mountPath: /app/vector_db_data

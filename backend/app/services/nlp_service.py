@@ -1,4 +1,5 @@
 import requests
+import time
 import json
 import numpy as np
 from typing import Dict, Any, List, Optional, Sequence
@@ -136,15 +137,22 @@ class GeminiChatModel(BaseChatModel):
         
         headers = {"Content-Type": "application/json"}
         
-        try:
-            response = requests.post(url, headers=headers, data=json.dumps(payload))
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"API request error: {e}")
-            if hasattr(e, 'response'):
-                print(f"Response content: {e.response.text}")
-            raise
+        max_retries = int(os.getenv("GEMINI_MAX_RETRIES", "3"))
+        backoff_seconds = float(os.getenv("GEMINI_RETRY_BACKOFF", "1.5"))
+        for attempt in range(max_retries + 1):
+            try:
+                response = requests.post(url, headers=headers, data=json.dumps(payload))
+                response.raise_for_status()
+                return response.json()
+            except requests.exceptions.RequestException as e:
+                status_code = getattr(getattr(e, "response", None), "status_code", None)
+                if status_code == 429 and attempt < max_retries:
+                    time.sleep(backoff_seconds * (2 ** attempt))
+                    continue
+                print(f"API request error: {e}")
+                if hasattr(e, "response") and e.response is not None:
+                    print(f"Response content: {e.response.text}")
+                raise
     
     def _create_chat_result(self, response: Dict[str, Any]) -> ChatResult:
         try:
@@ -171,7 +179,7 @@ def get_embeddings_model():
 def get_llm():
     return GeminiChatModel(
         api_key=settings.GOOGLE_API_KEY,
-        model_name="gemini-2.0-flash",  # Using the model from your curl example
+        model_name=os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-flash"),
         temperature=0.1,
         max_tokens=1024
     )

@@ -119,6 +119,15 @@ Helpful Answer:"""
     )
     return qa_chain
 
+
+def _retrieve_documents(retriever, query: str):
+    """
+    Compatibility layer for retriever API changes across LangChain versions.
+    """
+    if hasattr(retriever, "get_relevant_documents"):
+        return retriever.get_relevant_documents(query)
+    return retriever.invoke(query)
+
 async def process_query(user_query: str, file_context: str = None):
     llm = get_llm()
     retriever = get_retriever()
@@ -130,7 +139,7 @@ async def process_query(user_query: str, file_context: str = None):
     #    This context can include summaries of structured files.
     #    We want to ensure the LLM knows about available structured files.
     #    The vector store should have summaries of CSV/Excel files (column names, etc.)
-    docs_for_intent = retriever.get_relevant_documents(user_query)
+    docs_for_intent = _retrieve_documents(retriever, user_query)
     context_for_intent = "\n".join([doc.page_content for doc in docs_for_intent])
     
     # Add info about known structured files if not already in context
@@ -523,7 +532,7 @@ async def process_query(user_query: str, file_context: str = None):
             # For now, we'll use a simple approach of retrieving more documents than needed
             # and then filtering them manually
             
-            raw_docs = retriever.get_relevant_documents(final_query)
+            raw_docs = _retrieve_documents(retriever, final_query)
             
             # Filter documents to only include those from the specified file
             filtered_docs = [doc for doc in raw_docs if file_context.lower() in doc.metadata.get('source', '').lower()]

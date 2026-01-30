@@ -15,6 +15,7 @@ RUN mkdir -p /app/vector_db_data /app/temp_uploads
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV PORT 8000
+ENV WEB_CONCURRENCY 1
 
 # Set environment variables for Vertex AI if using ADC with a service account key
 # ENV GOOGLE_APPLICATION_CREDENTIALS /app/path/to/your-service-account-key.json 
